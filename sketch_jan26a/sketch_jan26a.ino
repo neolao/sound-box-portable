@@ -17,6 +17,8 @@ const int sideButtonCPin = 9;
 bool initialized = false;
 bool isFirstPlay = true;
 bool volumeMode = false;
+bool randomized = false;
+bool repeatOne = false;
 int volume = 10;
 int newVolume = 10;
 int fileNumber = 1;
@@ -70,8 +72,42 @@ void setup() {
 }
 
 void firstPlay() {
-  player.play(fileNumber);
+  if (randomized) {
+    player.play(random(1, fileCount));
+  } else {
+    player.play(fileNumber);
+  }
   player.volume(volume);
+}
+
+void next() {
+  if (volumeMode) {
+    newVolume = volume + 1;
+  } else if (repeatOne) {
+    newFileNumber = fileNumber;
+  } else if (randomized) {
+    newFileNumber = random(1, fileCount);
+  } else {
+    newFileNumber = fileNumber + 1;
+    if (newFileNumber > fileCount) {
+      newFileNumber = 1;
+    }
+  }
+}
+
+void previous() {
+  if (volumeMode) {
+    newVolume = volume - 1;
+  } else if (repeatOne) {
+    newFileNumber = fileNumber;
+  } else if (randomized) {
+    newFileNumber = random(1, fileCount);
+  } else {
+    newFileNumber = fileNumber - 1;
+    if (newFileNumber < 1) {
+      newFileNumber = fileCount;
+    }
+  }
 }
 
 void displayNumber(int value) {
@@ -94,27 +130,13 @@ void loop() {
 
   if (digitalRead(previousButtonPin) == LOW) {
     Serial.println("PREVIOUS pressed");
-    if (volumeMode) {
-      newVolume = volume - 1;
-    } else {
-      newFileNumber = fileNumber - 1;
-      if (newFileNumber < 1) {
-        newFileNumber = fileCount;
-      }
-    }
+    previous();
     delay(500);
   }
 
   if (digitalRead(nextButtonPin) == LOW) {
     Serial.println("NEXT pressed");
-    if (volumeMode) {
-      newVolume = volume + 1;
-    } else {
-      newFileNumber = fileNumber + 1;
-      if (newFileNumber > fileCount) {
-        newFileNumber = 1;
-      }
-    }
+    next();
     delay(500);
   }
 
@@ -131,11 +153,24 @@ void loop() {
 
   if (digitalRead(sideButtonBPin) == LOW) {
     Serial.println("Side button B pressed");
+    randomized = !randomized;
+    if (randomized) {
+      screen.display("ALEA");
+    } else {
+      screen.display("LINE");
+    }
+    delay(500);
   }
 
   if (digitalRead(sideButtonCPin) == LOW) {
     Serial.println("Side button C pressed");
-    delay(150);
+    repeatOne = !repeatOne;
+    if (repeatOne) {
+      screen.display("LOOP");
+    } else {
+      screen.display("NOLO");
+    }
+    delay(500);
   }
 
   if (volume != newVolume) {
@@ -155,6 +190,12 @@ void loop() {
     displayNumber(volume);  
   } else {
     displayNumber(fileNumber);
+  }
+
+  if (player.available()) {
+    if (player.readType() == DFPlayerPlayFinished) {
+      next();
+    }
   }
   
   /*
