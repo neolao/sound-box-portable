@@ -14,17 +14,22 @@ const int sideButtonAPin = 8;
 const int sideButtonBPin = 7;
 const int sideButtonCPin = 9;
 
+const int batteryReaderPin = A5;
+const float tensionMin = 0;
+const float tensionMax = 3.7;
+
 bool initialized = false;
 bool isFirstPlay = true;
 bool volumeMode = false;
+bool batteryMode = false;
 bool randomized = false;
 bool repeatOne = false;
 bool playFinished = true;
 String sideComboPressed = "";
-int volume = 10;
-int newVolume = 10;
+int volume = 15;
+int newVolume = volume;
 int fileNumber = 1;
-int newFileNumber = 1;
+int newFileNumber = fileNumber;
 int fileCount = 0;
 
 TM1637 screen(screenCLKPin, screenDIOPin);
@@ -40,6 +45,7 @@ void setupPlayer() {
 
 void setupScreen() {
   screen.begin();
+  screen.setBrightness(1);
 }
 
 void setupButtons() {
@@ -54,10 +60,10 @@ void initialize() {
   while(fileCount < 2) {
     fileCount = player.readFileCounts();
   }
-  screen.display("TOTA");
-  delay(200);
-  displayNumber(fileCount);
-  delay(200);
+  //screen.display("TOTA");
+  //delay(200);
+  //displayNumber(fileCount);
+  //delay(200);
   initialized = true;
 }
 
@@ -169,8 +175,13 @@ void loop() {
   updateSideButtonStates();
 
   if (sideComboPressed == "AB") {
-    screen.display("SEC");
-    delay(500);
+    if (batteryMode == false) {
+      screen.display("BATT");
+      delay(500);
+    }
+    batteryMode = true;
+  } else {
+    batteryMode = false;
   }
 
   if (sideComboPressed == "A") {
@@ -219,6 +230,18 @@ void loop() {
   // Screen
   if (volumeMode == true) {
     displayNumber(volume);  
+  } else if (batteryMode) {
+    float batteryValue = analogRead(batteryReaderPin);
+    int minValue = (1023 * tensionMin) / 5;
+    int maxValue = (1023 * tensionMax) / 5;
+    float percentage = ((batteryValue - minValue) / (maxValue - minValue)) * 100;
+    if (percentage > 100) {
+      percentage = 100;
+    } else if (percentage < 0) {
+      percentage = 0;
+    }
+    int percentageInteger = percentage;
+    displayNumber(percentageInteger);
   } else {
     displayNumber(fileNumber);
   }
@@ -229,21 +252,4 @@ void loop() {
       next();
     }
   }
-  
-  /*
-  tm.display("PLAY");
-  player.setTimeOut(500);
-  player.randomAll(); 
-  //delay(1000);
-  //Serial.println(player.readFileCounts());
-  tm.clearScreen();
-  //tm.display(player.readCurrentFileNumber(), false, true, 3);
-  //Serial.println(player.readCurrentFileNumber());
-  //Serial.println(player.readType());
-  //Serial.println(player.read());
-  //delay(5000);
-  //player.stop();
-  //tm.display("STOP");
-  //delay(5000);
-  */
 }
