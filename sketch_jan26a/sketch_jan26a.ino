@@ -19,6 +19,8 @@ bool isFirstPlay = true;
 bool volumeMode = false;
 bool randomized = false;
 bool repeatOne = false;
+bool playFinished = true;
+String sideComboPressed = "";
 int volume = 10;
 int newVolume = 10;
 int fileNumber = 1;
@@ -122,6 +124,30 @@ void displayNumber(int value) {
   screen.display(value, false, true, offset); 
 }
 
+void updateSideButtonStates() {
+  bool A = false;
+  bool B = false;
+  bool C = false;
+  
+  unsigned long timer = millis();
+  while(millis() - timer < 200) {
+    A = (digitalRead(sideButtonAPin) == LOW);
+    B = (digitalRead(sideButtonBPin) == LOW);
+    C = (digitalRead(sideButtonCPin) == LOW);
+
+    sideComboPressed = "";
+    if (A && B) {
+      sideComboPressed = "AB";
+    } else if (A) {
+      sideComboPressed = "A";
+    } else if (B) {
+      sideComboPressed = "B";
+    } else if (C) {
+      sideComboPressed = "C";
+    }
+  }
+}
+
 void loop() {
   if (isFirstPlay) {
     firstPlay();
@@ -140,8 +166,14 @@ void loop() {
     delay(500);
   }
 
-  if (digitalRead(sideButtonAPin) == LOW) {
-    Serial.println("Side button A pressed");
+  updateSideButtonStates();
+
+  if (sideComboPressed == "AB") {
+    screen.display("SEC");
+    delay(500);
+  }
+
+  if (sideComboPressed == "A") {
     if (volumeMode == false) {
       screen.display("UOLU");
       delay(500);
@@ -151,8 +183,7 @@ void loop() {
     volumeMode = false;
   }
 
-  if (digitalRead(sideButtonBPin) == LOW) {
-    Serial.println("Side button B pressed");
+  if (sideComboPressed == "B") {
     randomized = !randomized;
     if (randomized) {
       screen.display("ALEA");
@@ -162,8 +193,7 @@ void loop() {
     delay(500);
   }
 
-  if (digitalRead(sideButtonCPin) == LOW) {
-    Serial.println("Side button C pressed");
+  if (sideComboPressed == "C") {
     repeatOne = !repeatOne;
     if (repeatOne) {
       screen.display("LOOP");
@@ -179,7 +209,8 @@ void loop() {
     delay(150);
   }
 
-  if (fileNumber != newFileNumber) {
+  if (fileNumber != newFileNumber || playFinished) {
+    playFinished = false;
     player.play(newFileNumber);
     fileNumber = newFileNumber;
     delay(150);
@@ -194,6 +225,7 @@ void loop() {
 
   if (player.available()) {
     if (player.readType() == DFPlayerPlayFinished) {
+      playFinished = true;
       next();
     }
   }
