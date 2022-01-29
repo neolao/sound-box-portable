@@ -14,12 +14,14 @@ const int sideButtonAPin = 8;
 const int sideButtonBPin = 7;
 const int sideButtonCPin = 9;
 
+bool initialized = false;
 bool isFirstPlay = true;
 bool volumeMode = false;
 int volume = 10;
 int newVolume = 10;
 int fileNumber = 1;
 int newFileNumber = 1;
+int fileCount = 0;
 
 TM1637 screen(screenCLKPin, screenDIOPin);
 SoftwareSerial playerSerial(playerRXPin, playerTXPin);
@@ -44,6 +46,17 @@ void setupButtons() {
   pinMode(sideButtonCPin, INPUT_PULLUP);
 }
 
+void initialize() {
+  while(fileCount < 2) {
+    fileCount = player.readFileCounts();
+  }
+  screen.display("TOTA");
+  delay(200);
+  displayNumber(fileCount);
+  delay(200);
+  initialized = true;
+}
+
 void setup() {
   setupPlayer();
   setupScreen();
@@ -53,25 +66,10 @@ void setup() {
   Serial.println();
   Serial.println("Start");
 
-  //tm.display("UOLU");
-  //delay(5000);
-  //tm.display("ALEA");
-  //delay(5000);
-  //tm.display("BOUC");
-  //delay(5000);
-  //tm.display("OUI ");
-  //delay(5000);
-  //tm.display("NON ");
-  //delay(5000);
-  //tm.display("TOUT");
-  //delay(5000);
-  //tm.display("QUIT");
-  //delay(5000);
+  initialize();
 }
 
 void firstPlay() {
-  //player.disableDAC();
-  delay(1000);
   player.play(fileNumber);
   player.volume(volume);
 }
@@ -100,6 +98,9 @@ void loop() {
       newVolume = volume - 1;
     } else {
       newFileNumber = fileNumber - 1;
+      if (newFileNumber < 1) {
+        newFileNumber = fileCount;
+      }
     }
     delay(500);
   }
@@ -110,6 +111,9 @@ void loop() {
       newVolume = volume + 1;
     } else {
       newFileNumber = fileNumber + 1;
+      if (newFileNumber > fileCount) {
+        newFileNumber = 1;
+      }
     }
     delay(500);
   }
