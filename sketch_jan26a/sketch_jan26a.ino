@@ -15,8 +15,8 @@ const int sideButtonBPin = 7;
 const int sideButtonCPin = 9;
 
 const int batteryReaderPin = A5;
-const float tensionMin = 0;
-const float tensionMax = 3.7;
+const float tensionMin = 3.6;
+const float tensionMax = 4.2;
 
 bool initialized = false;
 bool isFirstPlay = true;
@@ -136,7 +136,7 @@ void updateSideButtonStates() {
   bool C = false;
   
   unsigned long timer = millis();
-  while(millis() - timer < 200) {
+  while(millis() - timer < 50) {
     A = (digitalRead(sideButtonAPin) == LOW);
     B = (digitalRead(sideButtonBPin) == LOW);
     C = (digitalRead(sideButtonCPin) == LOW);
@@ -177,11 +177,15 @@ void loop() {
   if (sideComboPressed == "AB") {
     if (batteryMode == false) {
       screen.display("BATT");
-      delay(500);
+      //delay(500);
+    } else {
+      screen.display("CHAN");
     }
-    batteryMode = true;
+    delay(500);
+    //batteryMode = true;
+    batteryMode = !batteryMode;
   } else {
-    batteryMode = false;
+    //batteryMode = false;
   }
 
   if (sideComboPressed == "A") {
@@ -232,8 +236,10 @@ void loop() {
     displayNumber(volume);  
   } else if (batteryMode) {
     float batteryValue = analogRead(batteryReaderPin);
-    int minValue = (1023 * tensionMin) / 5;
-    int maxValue = (1023 * tensionMax) / 5;
+    float batteryTension = batteryValue * 5.0 / 1023;
+    /*
+    int minValue = (1023 * tensionMin) / 5; // 400
+    int maxValue = (1023 * tensionMax) / 5; // 838
     float percentage = ((batteryValue - minValue) / (maxValue - minValue)) * 100;
     if (percentage > 100) {
       percentage = 100;
@@ -241,7 +247,14 @@ void loop() {
       percentage = 0;
     }
     int percentageInteger = percentage;
-    displayNumber(percentageInteger);
+    */
+    //displayNumber(percentageInteger);
+    int b = batteryValue;
+    displayNumber(b); // Max 140 = 4.1V
+    //delay(500);
+    //displayNumber(batteryTension);
+    //delay(500);
+    //displayNumber(round(batteryValue * 100));
   } else {
     displayNumber(fileNumber);
   }
