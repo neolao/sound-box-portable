@@ -45,7 +45,7 @@ void setupPlayer() {
 
 void setupScreen() {
   screen.begin();
-  screen.setBrightness(10);
+  screen.setBrightness(3);
 }
 
 void setupButtons() {
