@@ -22,6 +22,7 @@ bool initialized = false;
 bool isFirstPlay = true;
 bool volumeMode = false;
 bool batteryMode = false;
+bool storyMode = false;
 bool randomized = false;
 bool repeatOne = false;
 bool playFinished = true;
@@ -31,6 +32,8 @@ int newVolume = volume;
 int fileNumber = 1;
 int newFileNumber = fileNumber;
 int fileCount = 0;
+int fileCountInMusicsFolder = 0;
+int fileCountInStoriesFolder = 0;
 
 TM1637 screen(screenCLKPin, screenDIOPin);
 SoftwareSerial playerSerial(playerRXPin, playerTXPin);
@@ -41,6 +44,7 @@ void setupPlayer() {
   player.begin(playerSerial) ;
   player.setTimeOut(500);
   player.reset();
+  player.disableDAC();
 }
 
 void setupScreen() {
@@ -56,14 +60,38 @@ void setupButtons() {
   pinMode(sideButtonCPin, INPUT_PULLUP);
 }
 
-void initialize() {
-  while(fileCount < 2) {
-    fileCount = player.readFileCounts();
+void fetchFileCountInMusicsFolder() {
+  while(fileCountInMusicsFolder < 2) {
+    fileCountInMusicsFolder = player.readFileCountsInFolder(1);
   }
-  //screen.display("TOTA");
-  //delay(200);
-  //displayNumber(fileCount);
-  //delay(200);
+}
+
+void fetchFileCountInStoriesFolder() {
+  while(fileCountInStoriesFolder < 2 || fileCountInStoriesFolder == fileCountInMusicsFolder) {
+    fileCountInStoriesFolder = player.readFileCountsInFolder(2);
+  }
+}
+
+void initialize() {
+  screen.display("INIT");
+  
+  //while(fileCount < 2) {
+  //  fileCount = player.readFileCounts();
+  //}
+  fetchFileCountInMusicsFolder();
+  //player.reset();
+  //delay(500);
+  fetchFileCountInStoriesFolder();
+  /*
+  screen.display("CHAN");
+  delay(500);
+  displayNumber(fileCountInMusicsFolder);
+  delay(500);
+  screen.display("STOR");
+  delay(500);
+  displayNumber(fileCountInStoriesFolder);
+  delay(500);
+  //*/
   initialized = true;
 }
 
@@ -81,10 +109,22 @@ void setup() {
 
 void firstPlay() {
   if (randomized) {
-    player.play(random(1, fileCount));
+    if (storyMode) {
+      fileNumber = random(1, fileCountInStoriesFolder);
+    } else {
+      fileNumber = random(1, fileCountInMusicsFolder);
+    }
   } else {
-    player.play(fileNumber);
+    fileNumber = 1;
   }
+  newFileNumber = fileNumber;
+  
+  if (storyMode) {
+    player.playFolder(2, fileNumber);
+  } else {
+    player.playFolder(1, fileNumber);
+  }
+
   player.volume(volume);
 }
 
@@ -94,11 +134,21 @@ void next() {
   } else if (repeatOne) {
     newFileNumber = fileNumber;
   } else if (randomized) {
-    newFileNumber = random(1, fileCount);
+    if (storyMode) {
+      newFileNumber = random(1, fileCountInStoriesFolder);
+    } else {
+      newFileNumber = random(1, fileCountInMusicsFolder);
+    }
   } else {
     newFileNumber = fileNumber + 1;
-    if (newFileNumber > fileCount) {
-      newFileNumber = 1;
+    if (storyMode) {
+      if (newFileNumber > fileCountInStoriesFolder) {
+        newFileNumber = 1;
+      }
+    } else {
+      if (newFileNumber > fileCountInMusicsFolder) {
+        newFileNumber = 1;
+      }
     }
   }
 }
@@ -109,11 +159,19 @@ void previous() {
   } else if (repeatOne) {
     newFileNumber = fileNumber;
   } else if (randomized) {
-    newFileNumber = random(1, fileCount);
+    if (storyMode) {
+      newFileNumber = random(1, fileCountInStoriesFolder);
+    } else {
+      newFileNumber = random(1, fileCountInMusicsFolder);
+    }
   } else {
     newFileNumber = fileNumber - 1;
     if (newFileNumber < 1) {
-      newFileNumber = fileCount;
+      if (storyMode) {
+        newFileNumber = fileCountInStoriesFolder;
+      } else {
+        newFileNumber = fileCountInMusicsFolder;
+      }
     }
   }
 }
@@ -175,17 +233,19 @@ void loop() {
   updateSideButtonStates();
 
   if (sideComboPressed == "AB") {
-    if (batteryMode == false) {
-      screen.display("BATT");
+    //if (batteryMode == false) {
+    if (storyMode == false) {
+      screen.display("HIST");
       //delay(500);
     } else {
       screen.display("CHAN");
     }
-    delay(500);
-    //batteryMode = true;
-    batteryMode = !batteryMode;
-  } else {
-    //batteryMode = false;
+    delay(1000);
+    
+    //batteryMode = !batteryMode;
+    storyMode = !storyMode;
+
+    firstPlay();
   }
 
   if (sideComboPressed == "A") {
@@ -226,7 +286,11 @@ void loop() {
 
   if (fileNumber != newFileNumber || playFinished) {
     playFinished = false;
-    player.play(newFileNumber);
+    if (storyMode) {
+      player.playFolder(2, newFileNumber);
+    } else {
+      player.playFolder(1, newFileNumber);
+    }
     fileNumber = newFileNumber;
     delay(150);
   }
