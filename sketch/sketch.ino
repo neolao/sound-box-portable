@@ -1,31 +1,50 @@
-#include <TM1637.h>
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
+//#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
-#define MUSIC_COUNT 4
+#define MUSIC_COUNT 23
 #define STORY_COUNT 4
 
 #define MAX_VOLT 4.2
 #define MIN_VOLT 3.0
 double levelByVerticalLine = (MAX_VOLT - MIN_VOLT) / SCREEN_WIDTH;
 
-String musics[MUSIC_COUNT] = {
-  "Ah les crocodiles",
+char *musics[MUSIC_COUNT] = {
+  "Les crocodiles",
   "Au feu les pompiers",
   "Baby shark",
-  "Chi"
+  "Chi",
+  "Comment ca va",
+  "Dans sa maison un grand cerf",
+  "Dansons la capucine",
+  "Head shoulders knees and toes",
+  "Il etait un petit navire",
+  "Araignee Gypsie",
+  "Coccinelle rebelle",
+  "La ferme de Mathurin",
+  "Petit ver de terre",
+  "Lundi matin",
+  "Mon petit lapin",
+  "Petit escargot",
+  "Tchoupi",
+  "Petit moulin",
+  "Un elephant qui se balancait",
+  "Un hippopoquoi",
+  "Un jour dans sa cabane",
+  "Une poule sur un mur",
+  "Une souris verte"
 };
-String stories[STORY_COUNT] = {
+char *stories[] = {
   "A",
   "B",
   "C",
   "D"
 };
+
 
 const int playerRXPin = 12;
 const int playerTXPin = 11;
@@ -43,7 +62,7 @@ bool storyMode = false;
 bool randomized = false;
 bool repeatOne = false;
 bool playFinished = true;
-String sideComboPressed = "";
+char *sideComboPressed = "";
 int volume = 15;
 int newVolume = volume;
 int fileNumber = 1;
@@ -78,7 +97,7 @@ void setupButtons() {
   pinMode(sideButtonCPin, INPUT_PULLUP);
 }
 
-void displayText(String text, int size = 3) {
+void displayText(char *text, int size = 3) {
   screen.clearDisplay();
 
   screen.setTextSize(size);
@@ -89,32 +108,49 @@ void displayText(String text, int size = 3) {
   screen.display();
 }
 
-void displayCurrentFile(int index, String text) {
+void displayCurrentFile(int index, char *text) {
+  //Serial.println(text);
+  
+  int textOffset = 26;
+  int textLineLength = 8;
+  if (index >= 10) {
+    textOffset = 48;
+    textLineLength = 6;
+  }
+
+  /*
+  char line1[textLineLength];
+  for (int i = 0; i < textLineLength; i++) {
+    line1[i] = text[i];
+  }
+  
+  char line2[textLineLength];
+  for (int j = textLineLength; j < textLineLength * 2; j++) {
+    line2[j - textLineLength] = text[j];
+  }
+  //*/
+
+  char *line1 = "Aaafd";
+  char *line2 = "Bfdfd";
   screen.clearDisplay();
 
-  screen.setTextSize(2);
+  screen.setTextSize(4);
   screen.setTextColor(WHITE);
   screen.setCursor(0, 0);
 
-  //screen.println(index);
+  screen.println(index);
 
-  String all = String(index) + " " + text;
-  String truncatedText = all.substring(0, 20);
-  screen.println(truncatedText);
+  screen.setTextSize(2);
+  screen.setTextColor(WHITE);
+  screen.setCursor(textOffset, 0);
+  screen.print(line1);
+  screen.setCursor(textOffset, 16);
+  screen.print(line2);
 
   screen.display();
 }
 
 void displayNumber(int value) {
-  int offset = 0;
-  if (value < 10) {
-    offset = 3;
-  } else if (value < 100) {
-    offset = 2;
-  } else if (value < 1000) {
-    offset = 1;
-  }
-
   screen.clearDisplay();
 
   screen.setTextSize(4);
@@ -244,34 +280,28 @@ void previous() {
 }
 
 void updateSideButtonStates() {
-  bool A = false;
-  bool B = false;
-  bool C = false;
+  bool A = (digitalRead(sideButtonAPin) == LOW);
+  bool B = (digitalRead(sideButtonBPin) == LOW);
+  bool C = (digitalRead(sideButtonCPin) == LOW);
 
-  unsigned long timer = millis();
-  while (millis() - timer < 50) {
-    A = (digitalRead(sideButtonAPin) == LOW);
-    B = (digitalRead(sideButtonBPin) == LOW);
-    C = (digitalRead(sideButtonCPin) == LOW);
-
-    sideComboPressed = "";
-    if (A && B) {
-      sideComboPressed = "AB";
-      Serial.println("A & B pressed");
-    } else if (A && C) {
-      sideComboPressed = "AC";
-      Serial.println("A & C pressed");
-    } else if (A) {
-      sideComboPressed = "A";
-      Serial.println("A pressed");
-    } else if (B) {
-      sideComboPressed = "B";
-      Serial.println("B pressed");
-    } else if (C) {
-      sideComboPressed = "C";
-      Serial.println("C pressed");
-    }
+  sideComboPressed = "";
+  if (A && B) {
+    sideComboPressed = "AB";
+    Serial.println("A & B pressed");
+  } else if (A && C) {
+    sideComboPressed = "AC";
+    Serial.println("A & C pressed");
+  } else if (A) {
+    sideComboPressed = "A";
+    Serial.println("A pressed");
+  } else if (B) {
+    sideComboPressed = "B";
+    Serial.println("B pressed");
+  } else if (C) {
+    sideComboPressed = "C";
+    Serial.println("C pressed");
   }
+
 }
 
 long readVcc() {
@@ -391,7 +421,8 @@ void loop() {
       player.playFolder(1, newFileNumber);
     }
     fileNumber = newFileNumber;
-    delay(150);
+    displayCurrentFile(fileNumber, musics[fileNumber - 1]);
+    //delay(150);
   }
 
   // Screen
@@ -400,7 +431,7 @@ void loop() {
   } else if (batteryMode) {
     displayBatteryLevel();
   } else {
-    displayNumber(fileNumber);
+    //displayNumber(fileNumber);
     //displayCurrentFile(fileNumber, musics[fileNumber - 1]);
   }
 
