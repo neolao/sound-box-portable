@@ -10,6 +10,10 @@
 #define MUSIC_COUNT 4
 #define STORY_COUNT 4
 
+#define MAX_VOLT 4.2
+#define MIN_VOLT 3.0
+double levelByVerticalLine = (MAX_VOLT - MIN_VOLT) / SCREEN_WIDTH;
+
 String musics[MUSIC_COUNT] = {
   "Ah les crocodiles",
   "Au feu les pompiers",
@@ -97,7 +101,7 @@ void displayCurrentFile(int index, String text) {
   String all = String(index) + " " + text;
   String truncatedText = all.substring(0, 20);
   screen.println(truncatedText);
-  
+
   screen.display();
 }
 
@@ -124,47 +128,41 @@ void displayNumber(int value) {
 void displayBatteryLevel() {
   double currentVolt = readVcc() / 1000.0;
 
-  double maxVolt = 4.2;
-  double minVolt = 3.0;
-  double levelByVerticalLine = (maxVolt - minVolt) / SCREEN_WIDTH;
-  
-  if (currentVolt > maxVolt) {
-    displayText("Secteur");
-  } else if (currentVolt <= maxVolt && currentVolt > minVolt) {
-    double level = currentVolt - minVolt;
-    int linesToDraw = round(level / levelByVerticalLine);
-    
-    screen.clearDisplay();
+  screen.clearDisplay();
 
-    // Draw gauge
-    for (int column = 0; column < linesToDraw; column++) {
-      screen.drawFastVLine(column, 0, SCREEN_HEIGHT, WHITE);
-    }
-
-    // Draw border rectangle
-    screen.drawFastVLine(0, 0, SCREEN_HEIGHT, WHITE);
-    screen.drawFastVLine(SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT, WHITE);
-    screen.drawFastHLine(0, 0, SCREEN_WIDTH, WHITE);
-    screen.drawFastHLine(0, SCREEN_HEIGHT - 1, SCREEN_WIDTH, WHITE);
-    screen.drawPixel(0, 0, BLACK);
-    screen.drawPixel(0, SCREEN_HEIGHT - 1, BLACK);
-    screen.drawPixel(SCREEN_WIDTH - 1, 0, BLACK);
-    screen.drawPixel(SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1, BLACK);
-
-    // Draw text
-    int percent = (double(linesToDraw) / double(SCREEN_WIDTH)) * 100;
-    screen.setTextColor(INVERSE);
-    screen.setTextSize(3);
-    screen.setCursor(2, 2);
-    screen.println(String(percent)+"%");
-    screen.setTextSize(3);
-    screen.setCursor(80, 2);
-    screen.println(String(currentVolt)+"V");
-    
-    screen.display();
-  } else if (currentVolt <= 3.0) {
-    displayText("Faible");
+  // Draw gauge
+  double level = currentVolt - MIN_VOLT;
+  int linesToDraw = round(level / levelByVerticalLine);
+  for (int column = 0; column < linesToDraw; column++) {
+    screen.drawFastVLine(column, 0, SCREEN_HEIGHT, WHITE);
   }
+
+  // Draw border rectangle
+  screen.drawFastVLine(0, 0, SCREEN_HEIGHT, WHITE);
+  screen.drawFastVLine(SCREEN_WIDTH - 1, 0, SCREEN_HEIGHT, WHITE);
+  screen.drawFastHLine(0, 0, SCREEN_WIDTH, WHITE);
+  screen.drawFastHLine(0, SCREEN_HEIGHT - 1, SCREEN_WIDTH, WHITE);
+  screen.drawPixel(0, 0, BLACK);
+  screen.drawPixel(0, SCREEN_HEIGHT - 1, BLACK);
+  screen.drawPixel(SCREEN_WIDTH - 1, 0, BLACK);
+  screen.drawPixel(SCREEN_WIDTH - 1, SCREEN_HEIGHT - 1, BLACK);
+
+  // Draw text
+  int percent = (double(linesToDraw) / double(SCREEN_WIDTH)) * 100;
+  if (percent > 100) {
+    percent = 100;
+  } else if (percent < 0) {
+    percent = 0;
+  }
+  screen.setTextColor(INVERSE);
+  screen.setTextSize(3);
+  screen.setCursor(2, 2);
+  screen.println(String(percent) + "%");
+  screen.setTextSize(1);
+  screen.setCursor(96, 22);
+  screen.println(String(currentVolt) + "V");
+
+  screen.display();
 }
 
 void setup() {
@@ -275,29 +273,29 @@ void updateSideButtonStates() {
     }
   }
 }
-   
+
 long readVcc() {
   // Read 1.1V reference against AVcc
   // set the reference to Vcc and the measurement to the internal 1.1V reference
-  #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-    ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-  #elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
-    ADMUX = _BV(MUX5) | _BV(MUX0);
-  #elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-    ADMUX = _BV(MUX3) | _BV(MUX2);
-  #else
-    ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-  #endif  
- 
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+  ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+#elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
+  ADMUX = _BV(MUX5) | _BV(MUX0);
+#elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
+  ADMUX = _BV(MUX3) | _BV(MUX2);
+#else
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+#endif
+
   delay(2); // Wait for Vref to settle
   ADCSRA |= _BV(ADSC); // Start conversion
-  while (bit_is_set(ADCSRA,ADSC)); // measuring
- 
-  uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH  
+  while (bit_is_set(ADCSRA, ADSC)); // measuring
+
+  uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH
   uint8_t high = ADCH; // unlocks both
- 
-  long result = (high<<8) | low;
- 
+
+  long result = (high << 8) | low;
+
   result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
   return result; // Vcc in millivolts
 }
@@ -343,7 +341,7 @@ void loop() {
       displayText("Batterie", 2);
       delay(500);
     }
-    
+
     batteryMode = true;
   } else {
     batteryMode = false;
