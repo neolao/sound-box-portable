@@ -10,8 +10,6 @@
 #define SIDE_BUTTON_A_PIN 4
 #define SIDE_BUTTON_B_PIN 5
 #define SIDE_BUTTON_C_PIN 6
-#define MODE_MUSIC 1
-#define MODE_BATTERY 3
 #define CHAR_SIZE 24
 
 #define SCREEN_WIDTH 128
@@ -48,12 +46,8 @@ char *musics[] = {
   "23 Une souris verte"
 };
 
-uint8_t mode = MODE_MUSIC;
-bool volumeMode = false;
-bool batteryMode = false;
 bool randomized = false;
 bool repeatOne = false;
-char *sideComboPressed = "";
 uint8_t volume = 15;
 uint8_t fileNumber = 1;
 int textOffset = 0;
@@ -74,10 +68,10 @@ void setupPlayer() {
 
 void setupScreen() {
   if (!screen.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
-    Serial.println("Screen allocation failed");
+    //Serial.println("Screen allocation failed");
     for (;;);
   }
-  delay(2000);
+  //delay(2000);
   screen.clearDisplay();
   screen.setTextWrap(false);
 }
@@ -91,7 +85,6 @@ void setupButtons() {
 
   //attachInterrupt(digitalPinToInterrupt(PREVIOUS_BUTTON_PIN), previous, FALLING);
   //attachInterrupt(digitalPinToInterrupt(NEXT_BUTTON_PIN), next, FALLING);
-  //attachInterrupt(digitalPinToInterrupt(SIDE_BUTTON_C_PIN), toggleLoop, FALLING);
 }
 
 void displayText(char *text) {
@@ -182,9 +175,9 @@ void setup() {
   setupScreen();
   setupButtons();
 
-  Serial.begin(115200);
-  Serial.println();
-  Serial.println("Start");
+  //Serial.begin(115200);
+  //Serial.println();
+  //Serial.println("Start");
 
   playMusic();
 }
@@ -260,13 +253,13 @@ void loop() {
   bool sideButtonCPressed = digitalRead(SIDE_BUTTON_C_PIN) == LOW;
 
   if (!sideButtonAPressed && previousButtonPressed) {
-    Serial.println("PREVIOUS pressed");
+    //Serial.println("PREVIOUS pressed");
     previous();
     delay(400);
   }
 
   if (!sideButtonAPressed && nextButtonPressed) {
-    Serial.println("NEXT pressed");
+    //Serial.println("NEXT pressed");
     next();
     delay(400);
   }
@@ -288,8 +281,8 @@ void loop() {
     delay(2000);
   }
 
-  if (sideButtonBPressed) {
-    Serial.println("Toggle random");
+  if (!sideButtonAPressed && sideButtonBPressed) {
+    //Serial.println("Toggle random");
     randomized = !randomized;
     if (randomized) {
       displayText("Aleatoire");
@@ -299,8 +292,8 @@ void loop() {
     delay(400);
   }
 
-  if (sideButtonCPressed) {
-    Serial.println("Toggle loop");
+  if (!sideButtonAPressed && !sideButtonBPressed && sideButtonCPressed) {
+    //Serial.println("Toggle loop");
     repeatOne = !repeatOne;
     if (repeatOne) {
       displayText("Boucle");
@@ -310,13 +303,13 @@ void loop() {
     delay(400);
   }
 
+  // Animation
+  displayCurrentFile(musics[fileNumber - 1]);
+  textOffset = textOffset - 1;
+  if (textOffset < textMinOffset - CHAR_SIZE) {
+    textOffset = 0;
+  }
 
-    displayCurrentFile(musics[fileNumber - 1]);
-    textOffset = textOffset - 1;
-    if (textOffset < textMinOffset - CHAR_SIZE) {
-      textOffset = 0;
-    }
-  
 
   if (player.available() && player.readType() == DFPlayerPlayFinished) {
     next();
