@@ -1,7 +1,6 @@
 #include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 #include <Wire.h>
-//#include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
 #define SCREEN_WIDTH 128
@@ -13,30 +12,30 @@
 #define MIN_VOLT 3.0
 double levelByVerticalLine = (MAX_VOLT - MIN_VOLT) / SCREEN_WIDTH;
 
-char *musics[MUSIC_COUNT] = {
-  "Les crocodiles",
-  "Au feu les pompiers",
-  "Baby shark",
-  "Chi",
-  "Comment ca va",
-  "Dans sa maison un grand cerf",
-  "Dansons la capucine",
-  "Head shoulders knees and toes",
-  "Il etait un petit navire",
-  "Araignee Gypsie",
-  "Coccinelle rebelle",
-  "La ferme de Mathurin",
-  "Petit ver de terre",
-  "Lundi matin",
-  "Mon petit lapin",
-  "Petit escargot",
-  "Tchoupi",
-  "Petit moulin",
-  "Un elephant qui se balancait",
-  "Un hippopoquoi",
-  "Un jour dans sa cabane",
-  "Une poule sur un mur",
-  "Une souris verte"
+char *musics[] = {
+  "1 Crocodiles",
+  "2 Au feu les pompiers",
+  "3 Baby shark",
+  "4 Chi",
+  "5 Comment ca va",
+  "6 Un grand cerf",
+  "7 Dansons la capucine",
+  "8 Head shoulders knees and toes",
+  "9 Un petit navire",
+  "10 Araignee Gypsie",
+  "11 Coccinelle rebelle",
+  "12 Ferme de Mathurin",
+  "13 Petit ver de terre",
+  "14 Lundi matin",
+  "15 Mon petit lapin",
+  "16 Petit escargot",
+  "17 Tchoupi",
+  "18 Petit moulin",
+  "19 Un elephant qui se balancait",
+  "20 Un hippopoquoi",
+  "21 Un jour dans sa cabane",
+  "22 Une poule sur un mur",
+  "23 Une souris verte"
 };
 char *stories[] = {
   "A",
@@ -67,6 +66,8 @@ int volume = 15;
 int newVolume = volume;
 int fileNumber = 1;
 int newFileNumber = fileNumber;
+int textOffset = 0;
+int textMinOffset = -12;
 
 Adafruit_SSD1306 screen(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 SoftwareSerial playerSerial(playerRXPin, playerTXPin);
@@ -87,6 +88,7 @@ void setupScreen() {
   }
   delay(2000);
   screen.clearDisplay();
+  screen.setTextWrap(false);
 }
 
 void setupButtons() {
@@ -110,42 +112,14 @@ void displayText(char *text, int size = 3) {
 
 void displayCurrentFile(int index, char *text) {
   //Serial.println(text);
-  
-  int textOffset = 26;
-  int textLineLength = 8;
-  if (index >= 10) {
-    textOffset = 48;
-    textLineLength = 6;
-  }
 
-  /*
-  char line1[textLineLength];
-  for (int i = 0; i < textLineLength; i++) {
-    line1[i] = text[i];
-  }
-  
-  char line2[textLineLength];
-  for (int j = textLineLength; j < textLineLength * 2; j++) {
-    line2[j - textLineLength] = text[j];
-  }
-  //*/
-
-  char *line1 = "Aaafd";
-  char *line2 = "Bfdfd";
   screen.clearDisplay();
 
   screen.setTextSize(4);
   screen.setTextColor(WHITE);
-  screen.setCursor(0, 0);
-
-  screen.println(index);
-
-  screen.setTextSize(2);
-  screen.setTextColor(WHITE);
-  screen.setCursor(textOffset, 0);
-  screen.print(line1);
-  screen.setCursor(textOffset, 16);
-  screen.print(line2);
+  
+  screen.setCursor(textOffset, 1);
+  screen.print(text);
 
   screen.display();
 }
@@ -228,6 +202,8 @@ void firstPlay() {
     player.playFolder(2, fileNumber);
   } else {
     player.playFolder(1, fileNumber);
+    textOffset = screen.width() / 2;
+    textMinOffset = -12 * strlen(musics[fileNumber - 1]);
   }
 }
 
@@ -421,7 +397,11 @@ void loop() {
       player.playFolder(1, newFileNumber);
     }
     fileNumber = newFileNumber;
-    displayCurrentFile(fileNumber, musics[fileNumber - 1]);
+
+    //textOffset = screen.width();
+    textOffset = screen.width() / 2;
+    textMinOffset = -12 * strlen(musics[fileNumber - 1]);
+    //displayCurrentFile(fileNumber, musics[fileNumber - 1]);
     //delay(150);
   }
 
@@ -432,8 +412,14 @@ void loop() {
     displayBatteryLevel();
   } else {
     //displayNumber(fileNumber);
-    //displayCurrentFile(fileNumber, musics[fileNumber - 1]);
+    displayCurrentFile(fileNumber, musics[fileNumber - 1]);
+    delay(50);
+    textOffset = textOffset - 1;
+    if (textOffset < textMinOffset) {
+      textOffset = screen.width() / 2;
+    }
   }
+  
 
   if (player.available()) {
     if (player.readType() == DFPlayerPlayFinished) {
