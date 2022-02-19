@@ -11,7 +11,6 @@
 #define SIDE_BUTTON_B_PIN 5
 #define SIDE_BUTTON_C_PIN 6
 #define MODE_MUSIC 1
-#define MODE_VOLUME 2
 #define MODE_BATTERY 3
 #define CHAR_SIZE 24
 
@@ -95,10 +94,10 @@ void setupButtons() {
   //attachInterrupt(digitalPinToInterrupt(SIDE_BUTTON_C_PIN), toggleLoop, FALLING);
 }
 
-void displayText(char *text, uint8_t size = 3) {
+void displayText(char *text) {
   screen.clearDisplay();
 
-  screen.setTextSize(size);
+  screen.setTextSize(4);
   screen.setTextColor(WHITE);
   screen.setCursor(0, 0);
 
@@ -118,19 +117,20 @@ void displayCurrentFile(char *text) {
   screen.print(text);
   screen.setCursor(textOffset - textMinOffset + CHAR_SIZE, 2);
   screen.print(text);
-  
-  
+
+
   screen.display();
 }
 
-void displayNumber(uint8_t value) {
+void displayVolume(uint8_t value) {
   screen.clearDisplay();
 
   screen.setTextSize(4);
   screen.setTextColor(WHITE);
   screen.setCursor(0, 0);
 
-  screen.println(value);
+  screen.print("V ");
+  screen.print(value);
   screen.display();
 }
 
@@ -165,11 +165,14 @@ void displayBatteryLevel() {
   }
   screen.setTextColor(INVERSE);
   screen.setTextSize(3);
-  screen.setCursor(2, 2);
-  screen.println(String(percent) + "%");
+  screen.setCursor(3, 6);
+  screen.print(percent);
+  screen.print("%");
   screen.setTextSize(1);
   screen.setCursor(96, 22);
-  screen.println(String(currentVolt) + "V");
+  screen.print(currentVolt);
+  screen.print("V");
+  //Serial.println(currentVolt);
 
   screen.display();
 }
@@ -194,9 +197,7 @@ void playMusic() {
 }
 
 void next() {
-  if (mode == MODE_VOLUME) {
-    volume = volume + 1;
-  } else if (repeatOne) {
+  if (repeatOne) {
     playMusic();
   } else if (randomized) {
     fileNumber = random(1, MUSIC_COUNT);
@@ -211,9 +212,7 @@ void next() {
 }
 
 void previous() {
-  if (mode == MODE_VOLUME) {
-    volume = volume - 1;
-  } else if (repeatOne) {
+  if (repeatOne) {
     playMusic();
   } else if (randomized) {
     fileNumber = random(1, MUSIC_COUNT);
@@ -225,14 +224,6 @@ void previous() {
     }
     playMusic();
   }
-}
-
-void toggleLoop() {
-  repeatOne = !repeatOne;
-}
-
-void toggleRandom() {
-  randomized = !randomized;
 }
 
 long readVcc() {
@@ -267,7 +258,7 @@ void loop() {
   bool sideButtonAPressed = digitalRead(SIDE_BUTTON_A_PIN) == LOW;
   bool sideButtonBPressed = digitalRead(SIDE_BUTTON_B_PIN) == LOW;
   bool sideButtonCPressed = digitalRead(SIDE_BUTTON_C_PIN) == LOW;
-  
+
   if (!sideButtonAPressed && previousButtonPressed) {
     Serial.println("PREVIOUS pressed");
     previous();
@@ -282,33 +273,50 @@ void loop() {
 
   if (sideButtonAPressed && previousButtonPressed) {
     player.volume(volume--);
-    //displayText("VOL " + volume);
-    //delay(500);
+    displayVolume(volume);
+    delay(500);
   }
 
   if (sideButtonAPressed && nextButtonPressed) {
     player.volume(volume++);
-    //displayText("VOL " + volume);
-    //delay(500);
+    displayVolume(volume);
+    delay(500);
+  }
+
+  if (sideButtonAPressed && sideButtonBPressed) {
+    displayBatteryLevel();
+    delay(2000);
   }
 
   if (sideButtonBPressed) {
     Serial.println("Toggle random");
-    toggleRandom();
-    delay(200);
+    randomized = !randomized;
+    if (randomized) {
+      displayText("Aleatoire");
+    } else {
+      displayText("Lineaire");
+    }
+    delay(400);
   }
 
   if (sideButtonCPressed) {
     Serial.println("Toggle loop");
-    toggleLoop();
-    delay(200);
+    repeatOne = !repeatOne;
+    if (repeatOne) {
+      displayText("Boucle");
+    } else {
+      displayText("No boucle");
+    }
+    delay(400);
   }
 
-  displayCurrentFile(musics[fileNumber - 1]);
-  textOffset = textOffset - 1;
-  if (textOffset < textMinOffset - CHAR_SIZE) {
-    textOffset = 0;
-  }
+
+    displayCurrentFile(musics[fileNumber - 1]);
+    textOffset = textOffset - 1;
+    if (textOffset < textMinOffset - CHAR_SIZE) {
+      textOffset = 0;
+    }
+  
 
   if (player.available() && player.readType() == DFPlayerPlayFinished) {
     next();
