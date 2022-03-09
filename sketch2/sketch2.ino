@@ -14,10 +14,10 @@
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
-#define MUSIC_COUNT 23
+#define MUSIC_COUNT 25
 
 #define MAX_VOLT 4.2
-#define MIN_VOLT 3.0
+#define MIN_VOLT 3.2
 double levelByVerticalLine = (MAX_VOLT - MIN_VOLT) / SCREEN_WIDTH;
 
 char *musics[] = {
@@ -43,7 +43,9 @@ char *musics[] = {
   "20 Un hippopoquoi",
   "21 Un jour dans sa cabane",
   "22 Une poule sur un mur",
-  "23 Une souris verte"
+  "23 Une souris verte",
+  "24 Trois petits moutons",
+  "25 Lapin sous un chou"
 };
 
 bool randomized = false;
