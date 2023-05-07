@@ -10,6 +10,9 @@
  * SD_SCK      = GPIO 18
  * SD_MOSI     = GPIO 19
  * SD_MISO     = GPIO 16
+ * 
+ * PLAYER_RX   = GPIO 4
+ * PLAYER_TX   = GPIO 5
  */
 #include <SPI.h>
 #include "epd1in54_V2.h"
@@ -17,9 +20,12 @@
 #include "epdpaint.h"
 #include <stdio.h>
 #include <SD.h>
+#include <SoftwareSerial.h>
 #include <DFRobotDFPlayerMini.h>
 
 #define SD_CS 17
+#define PLAYER_RX_PIN 4
+#define PLAYER_TX_PIN 5
 
 Epd epd;
 unsigned char image[1024];
@@ -29,6 +35,9 @@ unsigned long time_start_ms;
 unsigned long time_now_s;
 #define COLORED     0
 #define UNCOLORED   1
+
+SoftwareSerial playerSerial(PLAYER_RX_PIN, PLAYER_TX_PIN);
+DFRobotDFPlayerMini player;
 
 void printDirectory(File dir, int numTabs) {
   while (true) {
@@ -64,6 +73,14 @@ void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(115200);
+
+  playerSerial.begin(9600);
+  player.begin(playerSerial);
+  player.setTimeOut(500);
+  player.reset();
+  player.disableDAC();
+  player.volume(15);
+  player.playFolder(1, 2);
 
   Serial.print("\nInitializing SD card...");
  
@@ -142,11 +159,14 @@ void setup()
   File dir =  SD.open("/");
   printDirectory(dir, 0);
 
+
+
   
   Serial.println("e-Paper init and clear");
   epd.LDirInit();
   epd.Clear();
 
+/*
   paint.SetWidth(200);
   paint.SetHeight(24);
 
@@ -181,15 +201,143 @@ void setup()
   epd.SetFrameMemory(paint.GetImage(), 120, 130, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
   delay(2000);
+  */
 
   Serial.println("e-Paper show pic");
   epd.HDirInit();
-  epd.Display(IMAGE_DATA);
+  //epd.Display(IMAGE_DATA);
+  //Serial.printf("IMAGE DATA Size = %d\n", sizeof(IMAGE_DATA));
+
+  //epd.HDirInit();
+  //const unsigned char* bitmp = getImageData("hello.bmp");
+
+  File bmpImage = SD.open("hello.bmp", FILE_READ);
+    unsigned int fileSize = bmpImage.size();
+
+    Serial.printf("File Size = %d\n", fileSize);
+    
+
+    int32_t dataStartingOffset = readNbytesInt(&bmpImage, 0x0A, 4);
+
+    // Change their types to int32_t (4byte)
+    int32_t width = readNbytesInt(&bmpImage, 0x12, 4);
+    int32_t height = readNbytesInt(&bmpImage, 0x16, 4);
+    Serial.println(width);
+    Serial.println(height);
+
+    int16_t pixelsize = readNbytesInt(&bmpImage, 0x1C, 2);
+
+    if (pixelsize != 24)
+    {
+        Serial.println("Image is not 24 bpp");
+        while (1);
+    }
+
+    bmpImage.seek(dataStartingOffset);//skip bitmap header
+
+    int32_t bufferWidth = width / 8;
+
+    // 24bpp means you have three bytes per pixel, usually B G R
+
+    byte R, G, B;
+    unsigned char bitmp[height * bufferWidth];
+    for(int32_t i = 0; i < height; i ++) {
+        for (int32_t j = 0; j < bufferWidth; j ++) {
+            int32_t pixels = 0;
+
+            // 1
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 128;
+            }
+
+            // 2
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 64;
+            }
+
+            // 3
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 32;
+            }
+
+            // 4
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 16;
+            }
+
+            // 5
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 8;
+            }
+
+            // 6
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 4;
+            }
+
+            // 7
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 2;
+            }
+
+            // 8
+            B = bmpImage.read();
+            G = bmpImage.read();
+            R = bmpImage.read();
+            if (B > 0) {
+               pixels += 1;
+            }
+
+            Serial.print(pixels);
+            Serial.print(" ");
+
+            bitmp[i * bufferWidth + j] = pixels;
+            
+            /*
+            Serial.print("R");
+            Serial.print(R);
+            Serial.print("G");
+            Serial.print(G);
+            Serial.print("B");
+            Serial.print(B);
+            Serial.print(" ");
+            //*/
+
+   
+        }
+    }
+
+    bmpImage.close();
+  
+  epd.Display(bitmp);
+  Serial.println("e-Paper show pic DONE");
 
   //Part display
-  epd.HDirInit();
-  epd.DisplayPartBaseImage(IMAGE_DATA);
+  //epd.HDirInit();
+  //epd.DisplayPartBaseImage(IMAGE_DATA);
 
+  /*
   paint.SetWidth(50);
   paint.SetHeight(60);
   paint.Clear(UNCOLORED);
@@ -203,11 +351,29 @@ void setup()
     epd.DisplayPartFrame();
     delay(100);
   }
+  */
 
   //Serial.println("e-Paper clear and goto sleep");
   //epd.HDirInit();
   //epd.Clear();
   //epd.Sleep();
+}
+
+int32_t readNbytesInt(File *p_file, int position, byte nBytes)
+{
+    if (nBytes > 4)
+        return 0;
+
+    p_file->seek(position);
+
+    int32_t weight = 1;
+    int32_t result = 0;
+    for (; nBytes; nBytes--)
+    {
+        result += weight * p_file->read();
+        weight <<= 8;
+    }
+    return result;
 }
 
 void loop()
