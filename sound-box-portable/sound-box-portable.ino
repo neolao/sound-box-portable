@@ -13,6 +13,11 @@
  * 
  * PLAYER_RX   = GPIO 4
  * PLAYER_TX   = GPIO 5
+ * 
+ * BUTTON_1    = GPIO 15
+ * BUTTON_2    = GPIO 14
+ * BUTTON_3    = GPIO 11
+ * BUTTON_4    = GPIO 10
  */
 #include <SPI.h>
 #include "epd1in54_V2.h"
@@ -26,6 +31,10 @@
 #define SD_CS 17
 #define PLAYER_RX_PIN 4
 #define PLAYER_TX_PIN 5
+#define BUTTON_1 15
+#define BUTTON_2 14
+#define BUTTON_3 11
+#define BUTTON_4 10
 
 Epd epd;
 unsigned char image[1024];
@@ -69,18 +78,28 @@ void printDirectory(File dir, int numTabs) {
   }
 }
 
+void setupButtons() {
+  pinMode(BUTTON_1, INPUT_PULLUP);
+  pinMode(BUTTON_2, INPUT_PULLUP);
+  pinMode(BUTTON_3, INPUT_PULLUP);
+  pinMode(BUTTON_4, INPUT_PULLUP);
+}
+
 void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(115200);
+
+  setupButtons();
 
   playerSerial.begin(9600);
   player.begin(playerSerial);
   player.setTimeOut(500);
   player.reset();
   player.disableDAC();
-  player.volume(15);
+  delay(1000);
   player.playFolder(1, 2);
+  player.volume(8);
 
   Serial.print("\nInitializing SD card...");
  
@@ -378,5 +397,28 @@ int32_t readNbytesInt(File *p_file, int position, byte nBytes)
 
 void loop()
 {
+  bool button1Pressed = digitalRead(BUTTON_1) == LOW;
+  bool button2Pressed = digitalRead(BUTTON_2) == LOW;
+  bool button3Pressed = digitalRead(BUTTON_3) == LOW;
+  bool button4Pressed = digitalRead(BUTTON_4) == LOW;
 
+  if (button1Pressed) {
+    Serial.println("BUTTON 1 pressed");
+    delay(400);
+  }
+
+  if (button2Pressed) {
+    Serial.println("BUTTON 2 pressed");
+    delay(400);
+  }
+
+  if (button3Pressed) {
+    Serial.println("BUTTON 3 pressed");
+    delay(400);
+  }
+
+  if (button4Pressed) {
+    Serial.println("BUTTON 4 pressed");
+    delay(400);
+  }
 }
