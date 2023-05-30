@@ -1,0 +1,26 @@
+#include "epd1in54_V2.h"
+#include "epdpaint.h"
+
+#ifndef UI_h
+#define UI_h
+#define COLORED     0
+#define UNCOLORED   1
+
+class UI {
+  public:
+    UI(Epd epd);
+    ~UI();
+    void DisplayBitmap();
+    void DisplayBitmapOld();
+    void PressMenu1();
+    void ReleaseMenu1();
+    
+  private:
+    Epd _epd;
+    bool _menu1Pressed;
+    int32_t ReadNbytesInt(File *p_file, int position, byte nBytes);
+    void DrawMenu();
+    void DrawMenuArrowDown(Paint paint, int x, int y);
+};
+
+#endif
