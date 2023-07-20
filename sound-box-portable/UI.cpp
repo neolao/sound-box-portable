@@ -33,14 +33,13 @@ void UI::DrawMenu() {
   paint.DrawHorizontalLine(0, 50, 24, COLORED);
   paint.DrawHorizontalLine(0, 100, 24, COLORED);
   paint.DrawHorizontalLine(0, 150, 24, COLORED);
-  _epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+  //_epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+
+  _epd.SetFrameMemoryPartial(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
+  _epd.DisplayPartFrame();
 
   // Menu 1
-  DrawMenuArrowDown(paint, 5, 170);
-  
-  _epd.SetFrameMemoryPartial(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-  
-  _epd.DisplayPartFrame();
+  DrawMenuArrowDown(paint, 20, 100);
 }
 
 void UI::PressMenu1() {
@@ -52,9 +51,14 @@ void UI::ReleaseMenu1() {
 }
 
 void UI::DrawMenuArrowDown(Paint paint, int x, int y) {
-  for (int h = 0; h < 16; h++) {
-    paint.DrawHorizontalLine(x + h, y + h, 16 - h, COLORED);  
-  }
+  int iconWidth = 16;
+  int iconHeight = 16;
+  unsigned char* icon;
+  icon = GetImageData("icons/arrow-down.bmp", icon);
+
+  _epd.SetFrameMemoryPartial(icon, x, y, iconWidth, iconHeight);
+  
+  _epd.DisplayPartFrame();
 }
 
 int32_t UI::ReadNbytesInt(File *p_file, int position, byte nBytes)
@@ -91,6 +95,11 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       Serial.println(" is not 24 bpp");
       while (1);
   }
+
+  Serial.print("Image size: ");
+  Serial.print(width);
+  Serial.print(" x ");
+  Serial.println(height);
 
   bmpImage.seek(dataStartingOffset);//skip bitmap header
 
@@ -167,10 +176,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
          pixels += 128;
       }
 
-      Serial.print(pixels);
-      Serial.print(" ");
-
-      bitmp[h * bufferWidth + (bufferWidth - w)] = pixels;
+      bitmp[h * bufferWidth + (bufferWidth - w - 1)] = pixels;
     }
   }
   bmpImage.close();
