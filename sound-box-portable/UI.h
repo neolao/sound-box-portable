@@ -19,6 +19,7 @@ class UI {
     Epd _epd;
     bool _menu1Pressed;
     int32_t ReadNbytesInt(File *p_file, int position, byte nBytes);
+    unsigned char* GetImageData(const char *filePath, unsigned char* bitmp);
     void DrawMenu();
     void DrawMenuArrowDown(Paint paint, int x, int y);
 };
