@@ -36,10 +36,21 @@ void UI::DrawMenu() {
   //_epd.SetFrameMemory(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
 
   _epd.SetFrameMemoryPartial(paint.GetImage(), 0, 0, paint.GetWidth(), paint.GetHeight());
-  _epd.DisplayPartFrame();
+  
 
   // Menu 1
-  DrawMenuArrowDown(paint, 20, 100);
+  DrawIcon("arrow-down", 8, 15);
+
+  // Menu 2
+  DrawIcon("arrow-up", 8, 70);
+
+  // Menu 3
+  DrawIcon("arrow-right", 8, 118);
+
+  // Menu 3
+  DrawIcon("arrow-left", 8, 168);
+
+  _epd.DisplayPartFrame();
 }
 
 void UI::PressMenu1() {
@@ -50,15 +61,18 @@ void UI::ReleaseMenu1() {
   _menu1Pressed = false;
 }
 
-void UI::DrawMenuArrowDown(Paint paint, int x, int y) {
+void UI::DrawIcon(const char* iconName, int x, int y) {
+  char iconFilePath[120];
+  strcpy(iconFilePath, "icons/");
+  strcat(iconFilePath, iconName);
+  strcat(iconFilePath, ".bmp");
+
   int iconWidth = 16;
   int iconHeight = 16;
   unsigned char* icon;
-  icon = GetImageData("icons/arrow-down.bmp", icon);
+  icon = GetImageData(iconFilePath, icon);
 
   _epd.SetFrameMemoryPartial(icon, x, y, iconWidth, iconHeight);
-  
-  _epd.DisplayPartFrame();
 }
 
 int32_t UI::ReadNbytesInt(File *p_file, int position, byte nBytes)
@@ -79,6 +93,9 @@ int32_t UI::ReadNbytesInt(File *p_file, int position, byte nBytes)
 }
 
 unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
+  Serial.print("GetImageData: ");
+  Serial.println(filePath);
+  
   File bmpImage = SD.open(filePath, FILE_READ);
   unsigned int fileSize = bmpImage.size();
   int32_t dataStartingOffset = ReadNbytesInt(&bmpImage, 0x0A, 4);

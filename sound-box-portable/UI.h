@@ -21,7 +21,7 @@ class UI {
     int32_t ReadNbytesInt(File *p_file, int position, byte nBytes);
     unsigned char* GetImageData(const char *filePath, unsigned char* bitmp);
     void DrawMenu();
-    void DrawMenuArrowDown(Paint paint, int x, int y);
+    void DrawIcon(const char* iconName, int x, int y);
 };
 
 #endif
