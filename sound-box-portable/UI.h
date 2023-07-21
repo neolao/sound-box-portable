@@ -11,7 +11,7 @@ class UI {
     UI(Epd epd);
     ~UI();
     void DisplayBitmap();
-    void DisplayBitmapOld();
+    void DisplayTrackNumber(int trackNumber);
     void PressMenu1();
     void ReleaseMenu1();
     

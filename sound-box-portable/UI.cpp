@@ -20,6 +20,20 @@ void UI::DisplayBitmap() {
   DrawMenu();
 }
 
+void UI::DisplayTrackNumber(int trackNumber) {
+  unsigned char image[1024];
+  Paint paint(image, 0, 0);
+  paint.SetRotate(ROTATE_180);
+  paint.SetWidth(72);
+  paint.SetHeight(24);
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(0, 0, "42", &Font24, COLORED);
+  
+  _epd.SetFrameMemoryPartial(paint.GetImage(), 200 - paint.GetWidth(), 200 - paint.GetHeight(), paint.GetWidth(), paint.GetHeight());
+  _epd.DisplayPartFrame();
+}
+
 void UI::DrawMenu() {
   unsigned char image[1024];
   Paint paint(image, 0, 0);

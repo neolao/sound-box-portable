@@ -85,9 +85,10 @@ void setup()
   
   delay(1000);
   player.playFolder(1, 2);
-  player.volume(19);
+  player.volume(20);
 
   UI.DisplayBitmap();
+  UI.DisplayTrackNumber(42);
 }
 
 void loop()
