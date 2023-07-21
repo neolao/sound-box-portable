@@ -44,6 +44,12 @@ Epd epd;
 SoftwareSerial playerSerial(PLAYER_RX_PIN, PLAYER_TX_PIN);
 DFRobotDFPlayerMini player;
 
+// State
+int folderCount; // player.readFolderCounts() doesn't work
+int* fileCountInFolders;
+int folderNumber = 1;
+int trackNumber = 1;
+
 // UI
 UI UI(epd);
 
@@ -57,9 +63,31 @@ void setupButtons() {
 void setupPlayer() {
   playerSerial.begin(9600);
   player.begin(playerSerial);
-  player.setTimeOut(500);
+  player.setTimeOut(2000);
   player.reset();
   player.disableDAC();
+
+  Serial.println("Setup player...");
+
+  // Get folder count
+  File folderCountFile = SD.open("folderCount.txt", FILE_READ);
+  folderCount = folderCountFile.parseInt();
+  Serial.print("Folder count: ");
+  Serial.println(folderCount);
+  /*
+  while(folderCount < 1) {
+    folderCount = player.readFolderCounts();
+    Serial.print("Folder count: ");
+    Serial.println(folderCount);
+    delay(50);
+  }
+  */
+
+  fileCountInFolders = new int[folderCount + 1];
+  for (int index = 1; index < folderCount + 1; index++) {
+    fileCountInFolders[index] = 0;
+  }
+  Serial.println("Setup player: Done");
 }
 
 void setupSDCard() {
@@ -79,44 +107,107 @@ void setup()
   Serial.begin(115200);
 
   setupButtons();
-  setupPlayer();
   setupSDCard();
+  setupPlayer();
   setupScreen();
   
   delay(1000);
-  player.playFolder(1, 2);
+  playCurrentTrack();
   player.volume(20);
 
-  UI.DisplayBitmap();
+  //UI.DisplayBitmap();
   UI.DisplayTrackNumber(42);
 }
 
-void loop()
-{
+void fetchFileCountInCurrentFolder() {
+  int fileCountInFolder = fileCountInFolders[folderNumber];
+  
+  if (fileCountInFolder < 2) {
+    while(fileCountInFolder < 2) {
+      fileCountInFolder = player.readFileCountsInFolder(folderNumber);
+    }
+    fileCountInFolders[folderNumber] = fileCountInFolder;
+
+    Serial.print("File count in folder ");
+    Serial.print(folderNumber);
+    Serial.print(": ");
+    Serial.println(fileCountInFolder);
+  }
+}
+
+void playCurrentTrack() {
+  player.playFolder(folderNumber, trackNumber);
+}
+
+void playNextTrack() {
+  trackNumber++;
+  fetchFileCountInCurrentFolder();
+  if (trackNumber > fileCountInFolders[folderNumber]) {
+    trackNumber = 1;
+  }
+  playCurrentTrack();
+}
+
+void playPreviousTrack() {
+  trackNumber--;
+  if (trackNumber < 1) {
+    fetchFileCountInCurrentFolder();
+    trackNumber = fileCountInFolders[folderNumber];
+  }
+  playCurrentTrack();
+}
+
+void playNextFolder() {
+  trackNumber = 1;
+  folderNumber++;
+  if (folderNumber > folderCount) {
+    folderNumber = 1;
+  }
+  playCurrentTrack();
+}
+
+void playPreviousFolder() {
+  trackNumber = 1;
+  folderNumber--;
+  if (folderNumber < 1) {
+    folderNumber = folderCount;
+  }
+  playCurrentTrack();
+}
+
+void loop() {
   bool button1Pressed = digitalRead(BUTTON_1) == LOW;
   bool button2Pressed = digitalRead(BUTTON_2) == LOW;
   bool button3Pressed = digitalRead(BUTTON_3) == LOW;
   bool button4Pressed = digitalRead(BUTTON_4) == LOW;
 
-  if (button1Pressed) {
-    Serial.println("BUTTON 1 pressed");
-    UI.PressMenu1();
-    UI.ReleaseMenu1();
-    delay(400);
-  }
-
-  if (button2Pressed) {
-    Serial.println("BUTTON 2 pressed");
+  if (button4Pressed) {
+    Serial.println("BUTTON 4 pressed");
+    playNextFolder();
     delay(400);
   }
 
   if (button3Pressed) {
     Serial.println("BUTTON 3 pressed");
+    playPreviousFolder();
     delay(400);
   }
 
-  if (button4Pressed) {
-    Serial.println("BUTTON 4 pressed");
+  if (button2Pressed) {
+    Serial.println("BUTTON 2 pressed");
+    playPreviousTrack();
     delay(400);
+  }
+
+  if (button1Pressed) {
+    Serial.println("BUTTON 1 pressed");
+    UI.PressMenu1();
+    UI.ReleaseMenu1();
+    playNextTrack();
+    delay(400);
+  }
+
+  if (player.available() && player.readType() == DFPlayerPlayFinished) {
+    playNextTrack();
   }
 }
