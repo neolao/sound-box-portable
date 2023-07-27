@@ -115,8 +115,8 @@ void setup()
   playCurrentTrack();
   player.volume(20);
 
-  UI.DisplayBitmap();
-  UI.DisplayTrackNumber(42);
+  
+  //UI.DisplayTrackNumber(42);
 }
 
 void fetchFileCountInCurrentFolder() {
@@ -135,8 +135,35 @@ void fetchFileCountInCurrentFolder() {
   }
 }
 
+
+
 void playCurrentTrack() {
   player.playFolder(folderNumber, trackNumber);
+
+  char folderName[2];
+  if (folderNumber < 10) {
+    sprintf(folderName, "0%d", folderNumber);
+  } else {
+    sprintf(folderName, "%d", folderNumber);
+  }
+
+  char trackName[3];
+  if (trackNumber < 10) {
+    sprintf(trackName, "00%d", trackNumber);
+  } else if (trackNumber < 100) {
+    sprintf(trackName, "0%d", trackNumber);
+  } else {
+    sprintf(trackName, "%d", trackNumber);
+  }
+  
+  char filePath[10];
+  sprintf(filePath, "%s/%s.bmp", folderName, trackName);
+
+  if (!SD.exists(filePath)) {
+    sprintf(filePath, "%s/unknown.bmp", folderName);
+  }
+  
+  UI.DisplayBitmap(filePath);
 }
 
 void playNextTrack() {

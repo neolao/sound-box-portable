@@ -8,11 +8,14 @@ UI::UI(Epd epd) {
 UI::~UI() {
 }
 
-void UI::DisplayBitmap() {
+void UI::DisplayBitmap(const char *filePath) {
+  Serial.print("Display bitmap: ");
+  Serial.println(filePath);
+  
   _epd.LDirInit();
 
   unsigned char* bitmp;
-  bitmp = GetImageData("01/001.bmp", bitmp);
+  bitmp = GetImageData(filePath, bitmp);
   
   _epd.Display(bitmp);
   //_epd.DisplayPartBaseImage(bitmp);
@@ -142,12 +145,13 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
   for (int32_t h = 0; h < height; h++) {
     for (int32_t w = 0; w < bufferWidth; w++) {
       int32_t pixels = 0;
+      int32_t threshold = 150;
 
       // 1
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 1;
       }
 
@@ -155,7 +159,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 2;
       }
 
@@ -163,7 +167,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 4;
       }
 
@@ -171,7 +175,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 8;
       }
 
@@ -179,7 +183,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 16;
       }
 
@@ -187,7 +191,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 32;
       }
 
@@ -195,7 +199,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 64;
       }
 
@@ -203,7 +207,7 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       B = bmpImage.read();
       G = bmpImage.read();
       R = bmpImage.read();
-      if (B > 0) {
+      if (B > threshold) {
          pixels += 128;
       }
 

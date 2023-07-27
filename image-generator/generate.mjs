@@ -3,15 +3,17 @@ import { argv } from 'node:process';
 import sharp from 'sharp';
 import bmpEncode from './bmpEncode.js';
 
-const menuFilePath = argv[2];
-const sourcePath = argv[3];
-const destinationPath = argv[4];
+const backgroundFilePath = argv[2];
+const menuFilePath = argv[3];
+const sourcePath = argv[4];
+const destinationPath = argv[5];
 try {
   const directory = await opendir(sourcePath);
   for await (const directoryEntry of directory) {
     if (directoryEntry.name.endsWith('.png')) {
-      const buffer = await sharp(`${sourcePath}/${directoryEntry.name}`)
+      const buffer = await sharp(backgroundFilePath)
         .composite([
+          { input: `${sourcePath}/${directoryEntry.name}` },
           { input: menuFilePath }
         ])
         .flatten({ background: "#ffffff" })
