@@ -12,12 +12,12 @@ void UI::DisplayBitmap() {
   _epd.LDirInit();
 
   unsigned char* bitmp;
-  bitmp = GetImageData("icons/test-pixelmato-24bpp.bmp", bitmp);
+  bitmp = GetImageData("01/001.bmp", bitmp);
   
   _epd.Display(bitmp);
-  _epd.DisplayPartBaseImage(bitmp);
+  //_epd.DisplayPartBaseImage(bitmp);
 
-  DrawMenu();
+  //DrawMenu();
 }
 
 void UI::DisplayTrackNumber(int trackNumber) {

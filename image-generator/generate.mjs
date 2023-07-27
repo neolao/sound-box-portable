@@ -1,7 +1,7 @@
 import { opendir, writeFile } from 'node:fs/promises';
 import { argv } from 'node:process';
 import sharp from 'sharp';
-import bmp from 'sharp-bmp';
+import bmpEncode from './bmpEncode.js';
 
 const menuFilePath = argv[2];
 const sourcePath = argv[3];
@@ -10,22 +10,25 @@ try {
   const directory = await opendir(sourcePath);
   for await (const directoryEntry of directory) {
     if (directoryEntry.name.endsWith('.png')) {
-      console.log(directoryEntry.name);
-      const { data, info } = await sharp(`${sourcePath}/${directoryEntry.name}`)
+      const buffer = await sharp(`${sourcePath}/${directoryEntry.name}`)
         .composite([
           { input: menuFilePath }
         ])
         .flatten({ background: "#ffffff" })
         .ensureAlpha()
-        .raw()
-        .toBuffer({ resolveWithObject: true });
+        .toBuffer();
+      const { data, info } = await sharp(buffer).flip().raw().toBuffer({ resolveWithObject: true });
       const bmpData = {
           data,
           width: info.width,
           height: info.height
-      };
-      const rawData = bmp.encode(bmpData);
-      await writeFile(`${destinationPath}/test.bmp`, rawData.data);
+        };
+      const rawData = bmpEncode(bmpData);
+
+      const destinationFileName = `${directoryEntry.name.substring(0, directoryEntry.name.length - 4)}.bmp`;
+      await writeFile(`${destinationPath}/${destinationFileName}`, rawData.data);
+
+      console.log(`${sourcePath}/${directoryEntry.name}`, '=>', `${destinationPath}/${destinationFileName}`);
     }
   }
 } catch (error) {

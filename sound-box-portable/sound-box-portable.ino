@@ -115,7 +115,7 @@ void setup()
   playCurrentTrack();
   player.volume(20);
 
-  //UI.DisplayBitmap();
+  UI.DisplayBitmap();
   UI.DisplayTrackNumber(42);
 }
 
