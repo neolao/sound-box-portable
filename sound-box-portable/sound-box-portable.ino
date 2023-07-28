@@ -49,6 +49,12 @@ int folderCount; // player.readFolderCounts() doesn't work
 int* fileCountInFolders;
 int folderNumber = 1;
 int trackNumber = 1;
+char folderName[2];
+char trackName[3];
+const char* trackTitle;
+char currentImagePath[20] = "";
+char nextImagePath[20] = "";
+long int nextImageTime = 0;
 
 // UI
 UI UI(epd);
@@ -113,10 +119,6 @@ void setup()
   
   delay(1000);
   playCurrentTrack();
-  player.volume(20);
-
-  
-  //UI.DisplayTrackNumber(42);
 }
 
 void fetchFileCountInCurrentFolder() {
@@ -135,19 +137,16 @@ void fetchFileCountInCurrentFolder() {
   }
 }
 
-
-
 void playCurrentTrack() {
   player.playFolder(folderNumber, trackNumber);
+  player.volume(20);
 
-  char folderName[2];
   if (folderNumber < 10) {
     sprintf(folderName, "0%d", folderNumber);
   } else {
     sprintf(folderName, "%d", folderNumber);
   }
 
-  char trackName[3];
   if (trackNumber < 10) {
     sprintf(trackName, "00%d", trackNumber);
   } else if (trackNumber < 100) {
@@ -155,15 +154,11 @@ void playCurrentTrack() {
   } else {
     sprintf(trackName, "%d", trackNumber);
   }
-  
-  char filePath[10];
-  sprintf(filePath, "%s/%s.bmp", folderName, trackName);
 
-  if (!SD.exists(filePath)) {
-    sprintf(filePath, "%s/unknown.bmp", folderName);
-  }
+  UI.DisplayTrackNumber(trackName);
   
-  UI.DisplayBitmap(filePath);
+  sprintf(nextImagePath, "%s/%s.bmp", folderName, trackName);
+  nextImageTime = millis();
 }
 
 void playNextTrack() {
@@ -209,32 +204,49 @@ void loop() {
   bool button4Pressed = digitalRead(BUTTON_4) == LOW;
 
   if (button4Pressed) {
-    Serial.println("BUTTON 4 pressed");
+    //Serial.println("BUTTON 4 pressed");
     playNextFolder();
-    delay(400);
   }
 
   if (button3Pressed) {
-    Serial.println("BUTTON 3 pressed");
+    //Serial.println("BUTTON 3 pressed");
     playPreviousFolder();
-    delay(400);
   }
 
   if (button2Pressed) {
-    Serial.println("BUTTON 2 pressed");
+    //Serial.println("BUTTON 2 pressed");
     playPreviousTrack();
-    delay(400);
   }
 
   if (button1Pressed) {
-    Serial.println("BUTTON 1 pressed");
+    //Serial.println("BUTTON 1 pressed");
     UI.PressMenu1();
     UI.ReleaseMenu1();
     playNextTrack();
-    delay(400);
   }
 
   if (player.available() && player.readType() == DFPlayerPlayFinished) {
     playNextTrack();
+  }
+
+  if (nextImageTime > 0 && millis() - nextImageTime > 1500 && strcmp(nextImagePath, currentImagePath) != 0) {
+    if (!SD.exists(nextImagePath)) {
+      sprintf(nextImagePath, "%s/unknown.bmp", folderName);
+    }
+    strcpy(currentImagePath, nextImagePath);
+    UI.DisplayBitmap(currentImagePath);
+    UI.DisplayTrackNumber(trackName);
+
+    /*
+    char trackTitleFilePath[20];
+    sprintf(trackTitleFilePath, "%s/%s.txt", folderName, trackName);
+    if (SD.exists(trackTitleFilePath)) {
+      File trackTitleFile = SD.open(trackTitleFilePath);
+      trackTitle = trackTitleFile.readStringUntil('\n').c_str();
+    } else {
+      trackTitle = "";
+    }
+    UI.DisplayTrack(trackTitle, trackName);
+    */
   }
 }

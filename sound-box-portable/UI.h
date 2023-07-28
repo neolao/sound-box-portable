@@ -10,8 +10,10 @@ class UI {
   public:
     UI(Epd epd);
     ~UI();
-    void DisplayBitmap(const char *filePath);
-    void DisplayTrackNumber(int trackNumber);
+    void DisplayBitmap(const char* filePath);
+    void DisplayFolderNumber(char* folderNumber);
+    void DisplayTrackNumber(char* trackNumber);
+    void DisplayTrack(const char* trackTitle, char* trackNumber);
     void PressMenu1();
     void ReleaseMenu1();
     

@@ -9,8 +9,8 @@ UI::~UI() {
 }
 
 void UI::DisplayBitmap(const char *filePath) {
-  Serial.print("Display bitmap: ");
-  Serial.println(filePath);
+  //Serial.print("Display bitmap: ");
+  //Serial.println(filePath);
   
   _epd.LDirInit();
 
@@ -18,23 +18,53 @@ void UI::DisplayBitmap(const char *filePath) {
   bitmp = GetImageData(filePath, bitmp);
   
   _epd.Display(bitmp);
-  //_epd.DisplayPartBaseImage(bitmp);
+  _epd.DisplayPartBaseImage(bitmp);
 
   //DrawMenu();
 }
 
-void UI::DisplayTrackNumber(int trackNumber) {
+void UI::DisplayTrackNumber(char* trackNumber) {
   unsigned char image[1024];
   Paint paint(image, 0, 0);
   paint.SetRotate(ROTATE_180);
-  paint.SetWidth(72);
-  paint.SetHeight(24);
+  paint.SetWidth(48);
+  paint.SetHeight(20);
 
   paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 0, "42", &Font24, COLORED);
+  paint.DrawStringAt(0, 0, trackNumber, &Font24, COLORED);
   
-  _epd.SetFrameMemoryPartial(paint.GetImage(), 200 - paint.GetWidth(), 200 - paint.GetHeight(), paint.GetWidth(), paint.GetHeight());
+  _epd.SetFrameMemoryPartial(paint.GetImage(), 0, 32, paint.GetWidth(), paint.GetHeight());
   _epd.DisplayPartFrame();
+}
+
+void UI::DisplayTrack(const char* trackTitle, char* trackNumber) {
+  unsigned char image[1024];
+
+  // Track title
+  Paint paintTitle(image, 0, 0);
+  paintTitle.SetRotate(ROTATE_180);
+  paintTitle.SetWidth(160);
+  paintTitle.SetHeight(16);
+
+  paintTitle.Clear(UNCOLORED);
+  paintTitle.DrawStringAt(0, 0, trackTitle, &Font20, COLORED);
+  
+  _epd.SetFrameMemoryPartial(paintTitle.GetImage(), 200 - paintTitle.GetWidth(), paintTitle.GetHeight(), paintTitle.GetWidth(), paintTitle.GetHeight());
+
+  // Track number
+  Paint paintNumber(image, 0, 0);
+  paintNumber.SetRotate(ROTATE_180);
+  paintNumber.SetWidth(48);
+  paintNumber.SetHeight(20);
+
+  paintNumber.Clear(UNCOLORED);
+  paintNumber.DrawStringAt(0, 0, trackNumber, &Font24, COLORED);
+  
+  _epd.SetFrameMemoryPartial(paintNumber.GetImage(), 0, 32, paintNumber.GetWidth(), paintNumber.GetHeight());
+
+  // Refresh
+  _epd.DisplayPartFrame();
+  
 }
 
 void UI::DrawMenu() {
@@ -110,8 +140,8 @@ int32_t UI::ReadNbytesInt(File *p_file, int position, byte nBytes)
 }
 
 unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
-  Serial.print("GetImageData: ");
-  Serial.println(filePath);
+  //Serial.print("GetImageData: ");
+  //Serial.println(filePath);
   
   File bmpImage = SD.open(filePath, FILE_READ);
   unsigned int fileSize = bmpImage.size();
@@ -130,10 +160,12 @@ unsigned char* UI::GetImageData(const char *filePath, unsigned char* bitmp) {
       while (1);
   }
 
+  /*
   Serial.print("Image size: ");
   Serial.print(width);
   Serial.print(" x ");
   Serial.println(height);
+  */
 
   bmpImage.seek(dataStartingOffset);//skip bitmap header
 
