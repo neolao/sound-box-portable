@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "jimp": "^0.22.10",
     "sharp": "^0.32.4",
     "sharp-bmp": "^0.1.5"
   }

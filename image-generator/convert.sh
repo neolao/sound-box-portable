@@ -4,4 +4,5 @@ node ./generate.mjs ~/sound-box-portable/DATA_SOURCE/background.png ~/sound-box-
 node ./generate.mjs ~/sound-box-portable/DATA_SOURCE/background.png ~/sound-box-portable/DATA_SOURCE/menu.png ~/sound-box-portable/DATA_SOURCE/02 ~/sound-box-portable/DATA/02
 node ./generate.mjs ~/sound-box-portable/DATA_SOURCE/background.png ~/sound-box-portable/DATA_SOURCE/menu.png ~/sound-box-portable/DATA_SOURCE/03 ~/sound-box-portable/DATA/03
 node ./generate.mjs ~/sound-box-portable/DATA_SOURCE/background.png ~/sound-box-portable/DATA_SOURCE/menu.png ~/sound-box-portable/DATA_SOURCE/04 ~/sound-box-portable/DATA/04
+node ./generate.mjs ~/sound-box-portable/DATA_SOURCE/background.png ~/sound-box-portable/DATA_SOURCE/menu.png ~/sound-box-portable/DATA_SOURCE/05 ~/sound-box-portable/DATA/05
 
