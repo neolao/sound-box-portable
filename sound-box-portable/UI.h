@@ -11,6 +11,8 @@ class UI {
     UI(Epd epd);
     ~UI();
     void DisplayBitmap(const char* filePath);
+    void DisplayModeTitle(const char* modeTitle);
+    void DisplayCurrentVolume(int currentVolume);
     void DisplayFolderNumber(char* folderNumber);
     void DisplayTrackNumber(char* trackNumber);
     void DisplayTrack(const char* trackTitle, char* trackNumber);

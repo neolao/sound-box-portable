@@ -17,10 +17,40 @@ void UI::DisplayBitmap(const char *filePath) {
   unsigned char* bitmp;
   bitmp = GetImageData(filePath, bitmp);
   
-  _epd.Display(bitmp);
+  //_epd.Display(bitmp);
   _epd.DisplayPartBaseImage(bitmp);
 
   //DrawMenu();
+}
+
+void UI::DisplayModeTitle(const char* modeTitle) {
+  unsigned char image[1024];
+  Paint paint(image, 0, 0);
+  paint.SetRotate(ROTATE_180);
+  paint.SetWidth(200);
+  paint.SetHeight(20);
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(0, 0, modeTitle, &Font24, COLORED);
+  
+  _epd.SetFrameMemoryPartial(paint.GetImage(), 200 - paint.GetWidth(), 200 - paint.GetHeight(), paint.GetWidth(), paint.GetHeight());
+  _epd.DisplayPartFrame();
+}
+
+void UI::DisplayCurrentVolume(int currentVolume) {
+  char volumeString[2];
+  sprintf(volumeString, "%d", currentVolume);
+  unsigned char image[1024];
+  Paint paint(image, 0, 0);
+  paint.SetRotate(ROTATE_180);
+  paint.SetWidth(200);
+  paint.SetHeight(20);
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(0, 0, volumeString, &Font24, COLORED);
+  
+  _epd.SetFrameMemoryPartial(paint.GetImage(), 200 - paint.GetWidth(), 200 - paint.GetHeight() - 40, paint.GetWidth(), paint.GetHeight());
+  _epd.DisplayPartFrame();
 }
 
 void UI::DisplayTrackNumber(char* trackNumber) {

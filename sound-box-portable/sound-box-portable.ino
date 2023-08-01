@@ -45,6 +45,7 @@ SoftwareSerial playerSerial(PLAYER_RX_PIN, PLAYER_TX_PIN);
 DFRobotDFPlayerMini player;
 
 // State
+int currentVolume = 22;
 int folderCount; // player.readFolderCounts() doesn't work
 int* fileCountInFolders;
 int folderNumber = 1;
@@ -55,6 +56,12 @@ const char* trackTitle;
 char currentImagePath[20] = "";
 char nextImagePath[20] = "";
 long int nextImageTime = 0;
+
+enum Mode {
+  NORMAL,
+  VOLUME
+};
+Mode currentMode;
 
 // UI
 UI UI(epd);
@@ -78,6 +85,7 @@ void setupPlayer() {
   // Get folder count
   File folderCountFile = SD.open("folderCount.txt", FILE_READ);
   folderCount = folderCountFile.parseInt();
+  folderCountFile.close();
   Serial.print("Folder count: ");
   Serial.println(folderCount);
   /*
@@ -93,6 +101,31 @@ void setupPlayer() {
   for (int index = 1; index < folderCount + 1; index++) {
     fileCountInFolders[index] = 0;
   }
+
+  // Get last folder
+  File lastFolderFile = SD.open("lastFolder.txt", FILE_READ);
+  if (lastFolderFile) {
+    folderNumber = lastFolderFile.parseInt();
+    lastFolderFile.close();
+  }
+  if (folderNumber > folderCount) {
+    folderNumber = 1;
+  }
+
+  // Get last track
+  File lastTrackFile = SD.open("lastTrack.txt", FILE_READ);
+  if (lastTrackFile) {
+    trackNumber = lastTrackFile.parseInt();
+    lastTrackFile.close();
+  }
+
+  // Get volume
+  File volumeFile = SD.open("volume.txt", FILE_READ);
+  if (volumeFile) {
+    currentVolume = volumeFile.parseInt();
+    volumeFile.close();
+  }
+  
   Serial.println("Setup player: Done");
 }
 
@@ -116,9 +149,18 @@ void setup()
   setupSDCard();
   setupPlayer();
   setupScreen();
-  
-  delay(1000);
-  playCurrentTrack();
+
+  delay(500);
+
+  bool button4Pressed = digitalRead(BUTTON_4) == LOW;
+  if (button4Pressed) {
+    currentMode = VOLUME;
+    UI.DisplayModeTitle("VOLUME");
+    UI.DisplayCurrentVolume(currentVolume);
+  } else {
+    currentMode = NORMAL;
+    playCurrentTrack();
+  }
 }
 
 void fetchFileCountInCurrentFolder() {
@@ -139,7 +181,7 @@ void fetchFileCountInCurrentFolder() {
 
 void playCurrentTrack() {
   player.playFolder(folderNumber, trackNumber);
-  player.volume(20);
+  player.volume(currentVolume);
 
   if (folderNumber < 10) {
     sprintf(folderName, "0%d", folderNumber);
@@ -159,6 +201,20 @@ void playCurrentTrack() {
   
   sprintf(nextImagePath, "%s/%s.bmp", folderName, trackName);
   nextImageTime = millis();
+
+  // Save folder
+  File lastFolderFile = SD.open("lastFolder.txt", O_TRUNC | O_WRITE);
+  if (lastFolderFile) {
+    lastFolderFile.print(folderNumber);
+    lastFolderFile.close();
+  }
+
+  // Save track
+  File lastTrackFile = SD.open("lastTrack.txt", O_TRUNC | O_WRITE);
+  if (lastTrackFile) {
+    lastTrackFile.print(trackNumber);
+    lastTrackFile.close();
+  }
 }
 
 void playNextTrack() {
@@ -197,7 +253,48 @@ void playPreviousFolder() {
   playCurrentTrack();
 }
 
-void loop() {
+void loopVolume() {
+  bool button1Pressed = digitalRead(BUTTON_1) == LOW;
+  bool button2Pressed = digitalRead(BUTTON_2) == LOW;
+  bool button3Pressed = digitalRead(BUTTON_3) == LOW;
+  bool button4Pressed = digitalRead(BUTTON_4) == LOW;
+
+  if (button4Pressed) {
+    
+  }
+
+  if (button3Pressed) {
+    
+  }
+
+  if (button2Pressed) {
+    currentVolume++;
+    
+    // Save volume
+    File volumeFile = SD.open("volume.txt", O_TRUNC | O_WRITE);
+    if (volumeFile) {
+      volumeFile.print(currentVolume);
+      volumeFile.close();
+    }
+
+    UI.DisplayCurrentVolume(currentVolume);
+  }
+
+  if (button1Pressed) {
+    currentVolume--;
+
+    // Save volume
+    File volumeFile = SD.open("volume.txt", O_TRUNC | O_WRITE);
+    if (volumeFile) {
+      volumeFile.print(currentVolume);
+      volumeFile.close();
+    }
+
+    UI.DisplayCurrentVolume(currentVolume);
+  }
+}
+
+void loopNormal() {
   bool button1Pressed = digitalRead(BUTTON_1) == LOW;
   bool button2Pressed = digitalRead(BUTTON_2) == LOW;
   bool button3Pressed = digitalRead(BUTTON_3) == LOW;
@@ -235,7 +332,7 @@ void loop() {
     }
     strcpy(currentImagePath, nextImagePath);
     UI.DisplayBitmap(currentImagePath);
-    UI.DisplayTrackNumber(trackName);
+    //UI.DisplayTrackNumber(trackName);
 
     /*
     char trackTitleFilePath[20];
@@ -248,5 +345,15 @@ void loop() {
     }
     UI.DisplayTrack(trackTitle, trackName);
     */
+  }
+}
+
+void loop() {
+  switch (currentMode) {
+    case VOLUME:
+      loopVolume();
+      break;
+    default:
+      loopNormal();
   }
 }
