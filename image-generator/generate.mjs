@@ -18,6 +18,7 @@ try {
     if (directoryEntry.name.endsWith('.png')) {
       const textOptions = {
         fill: '#000000',
+        stroke: '#ffffff',
         font: 'Arial', 
         size: 20,
       };
@@ -28,8 +29,22 @@ try {
           // Folder name
           {
             input: Buffer.from(`<svg height="200" width="200">
-                <text x="165" y="62" fill="${textOptions.fill}" font-family="${textOptions.font}" font-size="${textOptions.size}">${directoryName}</text>
-                <text x="160" y="162" fill="${textOptions.fill}" font-family="${textOptions.font}" font-size="${textOptions.size}">${fileName}</text>
+                <text
+                  x="165" y="62"
+                  fill="${textOptions.fill}"
+                  font-family="${textOptions.font}"
+                  font-size="${textOptions.size}"
+                  paint-order="stroke"
+                  style="fill: ${textOptions.fill}; stroke: ${textOptions.stroke}; stroke-width: 4"
+                >${directoryName}</text>
+                <text
+                  x="159" y="162"
+                  fill="${textOptions.fill}" 
+                  font-family="${textOptions.font}" 
+                  font-size="${textOptions.size}"
+                  paint-order="stroke"
+                  style="fill: ${textOptions.fill}; stroke: ${textOptions.stroke}; stroke-width: 4"
+                >${(fileName == 'unknown') ? '???' : fileName}</text>
               </svg>`)
           }
         ])
