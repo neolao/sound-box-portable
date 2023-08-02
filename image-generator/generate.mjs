@@ -1,4 +1,5 @@
 import { opendir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path'; 
 import { argv } from 'node:process';
 import sharp from 'sharp';
@@ -22,32 +23,39 @@ try {
         font: 'Arial', 
         size: 20,
       };
-      const buffer = await sharp(backgroundFilePath)
-        .composite([
-          { input: `${sourcePath}/${directoryEntry.name}` },
-          { input: menuFilePath },
-          // Folder name
-          {
-            input: Buffer.from(`<svg height="200" width="200">
-                <text
-                  x="165" y="62"
-                  fill="${textOptions.fill}"
-                  font-family="${textOptions.font}"
-                  font-size="${textOptions.size}"
-                  paint-order="stroke"
-                  style="fill: ${textOptions.fill}; stroke: ${textOptions.stroke}; stroke-width: 4"
-                >${directoryName}</text>
-                <text
-                  x="159" y="162"
-                  fill="${textOptions.fill}" 
-                  font-family="${textOptions.font}" 
-                  font-size="${textOptions.size}"
-                  paint-order="stroke"
-                  style="fill: ${textOptions.fill}; stroke: ${textOptions.stroke}; stroke-width: 4"
-                >${(fileName == 'unknown') ? '???' : fileName}</text>
-              </svg>`)
-          }
-        ])
+
+      const composites = [
+        { input: `${sourcePath}/${directoryEntry.name}` },
+        { input: menuFilePath },
+        // Folder name
+        {
+          input: Buffer.from(`<svg height="200" width="200">
+              <text
+                x="165" y="62"
+                fill="${textOptions.fill}"
+                font-family="${textOptions.font}"
+                font-size="${textOptions.size}"
+                paint-order="stroke"
+                style="fill: ${textOptions.fill}; stroke: ${textOptions.stroke}; stroke-width: 4"
+              >${directoryName}</text>
+              <text
+                x="159" y="162"
+                fill="${textOptions.fill}" 
+                font-family="${textOptions.font}" 
+                font-size="${textOptions.size}"
+                paint-order="stroke"
+                style="fill: ${textOptions.fill}; stroke: ${textOptions.stroke}; stroke-width: 4"
+              >${(fileName == 'unknown') ? '???' : fileName}</text>
+            </svg>`)
+        }
+      ];
+
+      if (await existsSync(`${sourcePath}/overlay-1.png`)) {
+        composites.push({ input: `${sourcePath}/overlay-1.png` });
+      }
+
+      let buffer = await sharp(backgroundFilePath)
+        .composite(composites)
         .flatten({ background: "#ffffff" })
         .ensureAlpha()
         .toBuffer();
